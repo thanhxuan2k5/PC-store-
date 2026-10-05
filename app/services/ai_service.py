@@ -6,7 +6,10 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from app.models.product import Product
+try:
+    from app.models.product import Product
+except ImportError:
+    Product = None
 from app.schemas.ai import AIChatRequest, AIChatResponse, RecommendedProductItem
 from app.core.lm_client import lm_client
 
@@ -64,8 +67,10 @@ class AISalesAssistant:
         db: Session,
         lower_msg: str,
         extracted_budget: Optional[float]
-    ) -> List[Product]:
+    ) -> List[Any]:
         """Tìm sản phẩm phù hợp từ DB dựa trên keyword + budget."""
+        if Product is None:
+            return []
        
         category_keywords = {
             "laptop":   ["laptop", "máy tính xách tay", "macbook", "notebook"],

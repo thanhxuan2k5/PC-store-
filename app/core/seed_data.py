@@ -3,19 +3,64 @@ import json
 from datetime import datetime, timedelta
 import numpy as np
 from sqlalchemy.orm import Session
-from app.models.user import User, UserRole
-from app.models.category import Category
-from app.models.product import Product
-from app.models.review import Review
 from app.models.internal_doc import InternalDoc
-from app.models.order import Order, OrderItem, OrderStatus, PaymentMethod
-from app.models.sales_log import SalesLog
-from app.core.security import get_password_hash
-from app.services.csv_sync_service import append_sales_record, init_csv_file
+
+try:
+    from app.models.user import User, UserRole
+    from app.models.category import Category
+    from app.models.product import Product
+    from app.models.review import Review
+    from app.models.order import Order, OrderItem, OrderStatus, PaymentMethod
+    from app.models.sales_log import SalesLog
+    from app.core.security import get_password_hash
+    from app.services.csv_sync_service import append_sales_record, init_csv_file
+except ImportError:
+    User = None
 
 def seed_database(db: Session):
-    # Check if data already seeded
-    if db.query(User).first() is not None:
+    # Ensure internal docs for RAG are seeded
+    if db.query(InternalDoc).first() is None:
+        docs = [
+            InternalDoc(
+                title="Chính Sách Bảo Hành & Đổi Trả Sản Phẩm Công Nghệ GearVN 2026",
+                category="Chính sách bảo hành",
+                tags="bao hanh, doi tra, 1 doi 1, loi nha san xuat",
+                content_text="""1. QUY ĐỊNH ĐỔI TRẢ 1 ĐỔI 1 TRONG 30 NGÀY ĐẦU:
+- Áp dụng cho tất cả các sản phẩm Laptop, PC Gaming, Linh kiện phần cứng (CPU, VGA, Mainboard, RAM, SSD, Nguồn) phát sinh lỗi kỹ thuật phần cứng do nhà sản xuất.
+- Điều kiện: Sản phẩm còn nguyên vẹn, không móp méo, trầy xước nặng, không có dấu hiệu vào nước hay can thiệp sửa chữa ngoài, đầy đủ hộp (box), sách hướng dẫn và phụ kiện đi kèm.
+
+2. QUY TRÌNH TIẾP NHẬN BẢO HÀNH:
+- Bước 1: Nhân viên kỹ thuật kiểm tra ngoại quan và xác nhận số Serial Number (S/N) trên hệ thống ERP GearVN.
+- Bước 2: Thời gian kiểm tra lỗi nhanh tại quầy từ 15 - 30 phút.
+- Bước 3: Nếu xác định lỗi phần cứng rõ ràng trong 30 ngày đầu, xuất kho đổi ngay sản phẩm mới 100% cùng model cho khách. Trường hợp hết hàng cùng model, khách hàng được đổi sang model tương đương hoặc hoàn tiền 100%."""
+            ),
+            InternalDoc(
+                title="Quy Định Bảo Hành Màn Hình và Tiêu Chuẩn Điểm Chết (Dead Pixel)",
+                category="Tiêu chuẩn kỹ thuật",
+                tags="man hinh, diem chet, dead pixel, asus, lg, samsung",
+                content_text="""TIÊU CHUẨN XỬ LÝ ĐIỂM CHẾT MÀN HÌNH CỦA CÁC HÃNG:
+- Hãng ASUS: Đổi mới màn hình nếu có từ 3 điểm chết sáng (Bright dot) hoặc 5 điểm chết tối (Dark dot) trở lên trong vòng 3 năm. Riêng dòng ROG/TUF cao cấp hỗ trợ Zero Bright Dot trong 1 năm đầu.
+- Hãng LG: Áp dụng đổi mới/thay panel nếu phát hiện từ 3 điểm chết trở lên đối với màn hình UltraGear và UltraFine.
+- Hãng Samsung: Áp dụng theo tiêu chuẩn tối thiểu 5 điểm chết đối với các dòng Odyssey Gaming.
+- Khách hàng mua kèm gói 'Bảo Hành VIP GearVN' được hỗ trợ 1 đổi 1 ngay lập tức nếu xuất hiện từ 1 điểm chết bất kỳ trong 3 tháng đầu."""
+            ),
+            InternalDoc(
+                title="Chính Sách Chiết Khấu Mua Hàng & Phúc Lợi Cho Nhân Viên GearVN",
+                category="Chính sách nội bộ",
+                tags="chiet khau nhan vien, mua hang noi bo, tra gop 0%",
+                content_text="""CHÍNH SÁCH MUA HÀNG NỘI BỘ DÀNH CHO NHÂN VIÊN CHÍNH THỨC:
+1. Mức giảm giá chiết khấu:
+- Linh kiện PC (CPU, Mainboard, VGA, RAM, SSD): Giảm trực tiếp 8% trên giá bán niêm yết hoặc tính theo giá vốn nhập kho + 2% chi phí vận hành (tùy mức nào thấp hơn).
+- Gaming Gear (Bàn phím, Chuột, Tai nghe): Giảm 12% - 15%.
+- Laptop Gaming & PC Lắp sẵn: Giảm 7% tối đa 3.000.000 VNĐ/sản phẩm.
+
+2. Hạn mức mua hàng: Mỗi nhân viên được hưởng hạn mức tối đa 50.000.000 VNĐ/năm cho người thân và bản thân. Cần đăng ký qua cổng Portal HR trước 24h."""
+            )
+        ]
+        db.add_all(docs)
+        db.commit()
+
+    if User is None or db.query(User).first() is not None:
         return
 
     print("🌱 Đang khởi tạo dữ liệu mẫu cho hệ thống GearVN Tech Store...")

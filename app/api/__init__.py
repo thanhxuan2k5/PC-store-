@@ -1,23 +1,7 @@
-from app.controllers.api import (
-    api_router,
-    auth_router,
-    categories_router,
-    products_router,
-    orders_router,
-    reviews_router,
-    ai_router,
-    rag_router,
-    analytics_router,
-)
+from app.api.ai_assistant import router as ai_router
+from app.api.rag_internal import router as rag_router
 
 __all__ = [
-    "api_router",
-    "auth_router",
-    "categories_router",
-    "products_router",
-    "orders_router",
-    "reviews_router",
     "ai_router",
     "rag_router",
-    "analytics_router",
 ]

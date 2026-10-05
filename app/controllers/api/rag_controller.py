@@ -9,12 +9,18 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.models.internal_doc import InternalDoc
-from app.models.user import User
+try:
+    from app.models.user import User
+    from app.core.security import require_staff_or_admin
+except ImportError:
+    User = None
+    def require_staff_or_admin():
+        return None
+
 from app.schemas.rag import (
     InternalDocCreate, InternalDocUpdate, InternalDocOut,
     RAGQueryRequest, RAGQueryResponse
 )
-from app.core.security import require_staff_or_admin
 from app.services.rag_service import rag_service
 from app.services.doc_extractor import extract_text_from_file
 
