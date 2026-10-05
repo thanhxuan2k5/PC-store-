@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
+
 <body>
 
     <!-- TOP HEADER -->
@@ -31,7 +36,8 @@
             <!-- Search Form -->
             <div class="search-wrapper">
                 <form action="/products" method="GET" class="search-form">
-                    <input type="text" name="search" class="search-input" placeholder="Bạn cần tìm linh kiện, laptop gaming hay PC?..." value="{{ search_query or '' }}">
+                    <input type="text" name="search" class="search-input"
+                        placeholder="Bạn cần tìm linh kiện, laptop gaming hay PC?..." value="{{ search_query or '' }}">
                     <button type="submit" class="search-btn">
                         <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
                     </button>
@@ -104,7 +110,8 @@
 
             <div class="nav-links">
                 <a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-                <a href="/products?is_flash_sale=true" class="nav-link highlight"><i class="fa-solid fa-bolt"></i> Flash Sale Giờ Vàng</a>
+                <a href="/products?is_flash_sale=true" class="nav-link highlight"><i class="fa-solid fa-bolt"></i> Flash
+                    Sale Giờ Vàng</a>
                 <a href="/products?category_slug=laptop-gaming" class="nav-link">Laptop Gaming</a>
                 <a href="/products?category_slug=pc-gaming" class="nav-link">PC G-Studio</a>
                 <a href="/pc-builder" class="nav-link"><i class="fa-solid fa-gear"></i> Xây Dựng Cấu Hình PC</a>
@@ -133,7 +140,8 @@
                     <div style="font-size:11px;opacity:0.8;">Tư vấn cấu hình & sản phẩm 24/7</div>
                 </div>
             </div>
-            <button onclick="AIChat.toggle()" style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;">
+            <button onclick="AIChat.toggle()"
+                style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -151,13 +159,21 @@
         </div>
 
         <div style="padding:6px 12px;background:#fff;border-top:1px solid #eee;display:flex;gap:4px;overflow-x:auto;">
-            <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;" onclick="AIChat.quickAsk('Tư vấn laptop gaming tầm 20 triệu chơi Valorant')">🎮 Laptop 20 triệu</button>
-            <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;" onclick="AIChat.quickAsk('Gợi ý PC đồ họa render video 4K')">🎨 PC Đồ Họa 4K</button>
-            <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;" onclick="AIChat.quickAsk('Có màn hình 2K 180Hz nào ngon bổ rẻ không?')">🖥️ Màn hình 2K</button>
+            <button class="btn btn-outline"
+                style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;"
+                onclick="AIChat.quickAsk('Tư vấn laptop gaming tầm 20 triệu chơi Valorant')">🎮 Laptop 20 triệu</button>
+            <button class="btn btn-outline"
+                style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;"
+                onclick="AIChat.quickAsk('Gợi ý PC đồ họa render video 4K')">🎨 PC Đồ Họa 4K</button>
+            <button class="btn btn-outline"
+                style="font-size:11px;padding:3px 8px;white-space:nowrap;border-radius:12px;"
+                onclick="AIChat.quickAsk('Có màn hình 2K 180Hz nào ngon bổ rẻ không?')">🖥️ Màn hình 2K</button>
         </div>
 
         <div class="ai-chat-input-box">
-            <input type="text" id="aiChatInput" placeholder="Nhập câu hỏi cho AI..." style="flex:1;border:1px solid #cbd5e1;border-radius:6px;padding:8px 12px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter') AIChat.send()">
+            <input type="text" id="aiChatInput" placeholder="Nhập câu hỏi cho AI..."
+                style="flex:1;border:1px solid #cbd5e1;border-radius:6px;padding:8px 12px;font-size:13px;outline:none;"
+                onkeydown="if(event.key==='Enter') AIChat.send()">
             <button class="btn btn-primary" onclick="AIChat.send()" style="padding:8px 14px;">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -173,7 +189,8 @@
                         <i class="fa-solid fa-gamepad" style="color:var(--primary);"></i>
                         <span>GEAR<span style="color:var(--primary);">VN</span></span>
                     </div>
-                    <p style="font-size:12px;color:#6b7280;margin-bottom:8px;">Hệ thống bán lẻ thiết bị công nghệ, Hi-End PC, Laptop Gaming và Gaming Gear hàng đầu Việt Nam.</p>
+                    <p style="font-size:12px;color:#6b7280;margin-bottom:8px;">Hệ thống bán lẻ thiết bị công nghệ,
+                        Hi-End PC, Laptop Gaming và Gaming Gear hàng đầu Việt Nam.</p>
                     <p style="font-size:12px;color:#6b7280;">Hotline tư vấn miễn phí: <strong>1800 6975</strong></p>
                     <p style="font-size:12px;color:#6b7280;">Email: cskh@gearvn.com</p>
                 </div>
@@ -207,4 +224,5 @@
     <script src="/static/js/ai_chat.js"></script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
