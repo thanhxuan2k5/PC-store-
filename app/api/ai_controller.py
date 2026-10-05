@@ -27,4 +27,3 @@ def check_pc_compatibility(req: PCBuilderCompatibilityRequest, db: Session = Dep
     (Socket CPU & Mainboard, Chuẩn RAM DDR4/DDR5, Công suất Nguồn PSU...)
     """
     return pc_builder_service.check_compatibility(db, req)
-#ai_controller
