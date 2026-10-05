@@ -1,4 +1,7 @@
-from app.controllers.api.ai_controller import router as ai_router
+from app.api.ai_assistant import router as ai_router
+from app.api.rag_internal import router as rag_router
 
-api_router = APIRouter()
-api_router.include_router(ai_router)
+__all__ = [
+    "ai_router",
+    "rag_router",
+]
