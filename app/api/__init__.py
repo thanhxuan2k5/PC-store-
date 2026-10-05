@@ -1,4 +1,23 @@
-from app.controllers.api.ai_controller import router as ai_router
+from app.controllers.api import (
+    api_router,
+    auth_router,
+    categories_router,
+    products_router,
+    orders_router,
+    reviews_router,
+    ai_router,
+    rag_router,
+    analytics_router,
+)
 
-api_router = APIRouter()
-api_router.include_router(ai_router)
+__all__ = [
+    "api_router",
+    "auth_router",
+    "categories_router",
+    "products_router",
+    "orders_router",
+    "reviews_router",
+    "ai_router",
+    "rag_router",
+    "analytics_router",
+]

@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+from app.models.product import Product
 from app.schemas.ai import AIChatRequest, AIChatResponse, RecommendedProductItem
 from app.core.lm_client import lm_client
 
