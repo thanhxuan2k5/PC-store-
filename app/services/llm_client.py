@@ -29,6 +29,7 @@ class LocalLLMClient:
         temperature: float = 0.7,
         max_tokens: int = 800
     ) -> Optional[str]:
+        """Gửi prompt tới LM Studio và nhận về câu trả lời tự nhiên"""
         if not settings.USE_LOCAL_LLM:
             return None
 

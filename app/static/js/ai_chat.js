@@ -1,4 +1,6 @@
-
+// ==========================================
+// GEARVN AI SALES ASSISTANT CHAT WIDGET
+// ==========================================
 
 const AIChat = {
     isOpen: false,
@@ -34,7 +36,7 @@ const AIChat = {
         this.appendMessage("user", message);
         input.value = "";
 
-
+        // Add typing indicator
         const typingEl = document.createElement("div");
         typingEl.className = "chat-bubble ai";
         typingEl.id = "aiTypingIndicator";
@@ -49,20 +51,20 @@ const AIChat = {
                 body: JSON.stringify({ message: message })
             });
             const data = await res.json();
-
-
+            
+            // Remove typing
             typingEl.remove();
 
-
+            // Format markdown reply
             let formattedReply = data.reply
                 .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
                 .replace(/\*(.*?)\*/g, "<em>$1</em>")
                 .replace(/\n/g, "<br>");
 
-
+            // Append AI response
             this.appendMessage("ai", formattedReply);
 
-
+            // Render suggested questions chips
             if (data.suggested_questions && data.suggested_questions.length > 0) {
                 const chipsBox = document.createElement("div");
                 chipsBox.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;";

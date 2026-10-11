@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # Database
+    # Database (Default SQLite for portability, easily switch to PostgreSQL)
     DATABASE_URL: str = "sqlite:///./data/gearvn.db"
     
     # Paths
@@ -17,8 +17,16 @@ class Settings(BaseSettings):
     CSV_SALES_PATH: str = os.path.join(DATA_DIR, "sales_realtime.csv")
     INTERNAL_DOCS_DIR: str = os.path.join(DATA_DIR, "internal_docs")
     UPLOADS_DIR: str = os.path.join(DATA_DIR, "uploads")
+    
+    # AI & Local LLM Settings
+    USE_LOCAL_LLM: bool = True
+    LM_STUDIO_URL: str = "http://127.0.0.1:1234/v1"
+    LM_STUDIO_MODEL: str = "qwen2.5-7b-instruct"
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # LM Studio — Local LLM (OpenAI-compatible API)
+    # Khởi động LM Studio, load model, server sẽ chạy tại localhost:1234
     LM_STUDIO_URL: str = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1")
     LM_STUDIO_MODEL: str = os.getenv("LM_STUDIO_MODEL", "local-model")
     LM_STUDIO_API_KEY: str = os.getenv("LM_STUDIO_API_KEY", "")

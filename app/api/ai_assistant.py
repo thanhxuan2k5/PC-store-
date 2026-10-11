@@ -8,7 +8,7 @@ from app.schemas.ai import (
     PCBuilderCompatibilityResponse
 )
 from app.services.ai_service import ai_sales_assistant
-#from app.services.pc_builder_service import pc_builder_service
+from app.services.pc_builder_service import pc_builder_service
 
 router = APIRouter(prefix="/ai", tags=["AI Sales Assistant"])
 
@@ -26,4 +26,4 @@ def check_pc_compatibility(req: PCBuilderCompatibilityRequest, db: Session = Dep
     Kiểm tra tính tương thích giữa các linh kiện trong dàn PC đã chọn
     (Socket CPU & Mainboard, Chuẩn RAM DDR4/DDR5, Công suất Nguồn PSU...)
     """
-    #return pc_builder_service.check_compatibility(db, req)
+    return pc_builder_service.check_compatibility(db, req)

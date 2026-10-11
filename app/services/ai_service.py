@@ -1,4 +1,12 @@
+"""
+AI Sales Assistant — Hybrid Rule-based + LM Studio
+===================================================
+Kiến trúc 2 tầng:
+  Tầng 1: SQLAlchemy DB query để tìm sản phẩm phù hợp (rule-based, GIỮA NGUYÊN)
+  Tầng 2: LM Studio để viết câu trả lời tự nhiên (MỚI)
 
+Fallback: Nếu LM Studio không chạy → dùng reply template cũ (không crash)
+"""
 import re
 import json
 from typing import List, Dict, Any, Optional, Tuple
@@ -6,10 +14,15 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+from app.models.product import Product
 from app.schemas.ai import AIChatRequest, AIChatResponse, RecommendedProductItem
 from app.core.lm_client import lm_client
 
 
+# ------------------------------------------------------------------
+# System Prompt cho LM Studio
+# Điều chỉnh tại đây để thay đổi phong cách tư vấn của AI
+# ------------------------------------------------------------------
 SALES_SYSTEM_PROMPT = """Bạn là Trợ lý AI GearVN — chuyên gia tư vấn thiết bị công nghệ hàng đầu Việt Nam.
 
 Vai trò: Tư vấn sản phẩm công nghệ (laptop, PC, linh kiện, phụ kiện gaming) dựa trên nhu cầu khách hàng.
@@ -36,6 +49,9 @@ Format phản hồi:
 
 class AISalesAssistant:
 
+    # ------------------------------------------------------------------
+    # Budget Extraction (giữ nguyên)
+    # ------------------------------------------------------------------
 
     def extract_budget(self, text: str) -> Optional[float]:
         """Trích xuất ngân sách từ câu nói tự nhiên của người dùng."""
@@ -57,6 +73,9 @@ class AISalesAssistant:
                 pass
         return None
 
+    # ------------------------------------------------------------------
+    # DB Query Logic (giữ nguyên — rule-based nhưng chính xác)
+    # ------------------------------------------------------------------
 
     def _query_products(
         self,
@@ -65,7 +84,7 @@ class AISalesAssistant:
         extracted_budget: Optional[float]
     ) -> List[Product]:
         """Tìm sản phẩm phù hợp từ DB dựa trên keyword + budget."""
-       
+        # Keyword mapping: category detection
         category_keywords = {
             "laptop":   ["laptop", "máy tính xách tay", "macbook", "notebook"],
             "pc":       ["pc", "máy bàn", "cây máy tính", "case", "dàn máy"],
@@ -115,13 +134,13 @@ class AISalesAssistant:
         elif target_cat == "mouse":
             query = query.filter(Product.name.ilike("%Chuột%"))
 
-       
+        # Sắp xếp: rating cao + bán nhiều trước
         products = query.order_by(
             Product.rating_avg.desc(),
             Product.sales_count.desc()
-        ).limit(5).all()  
+        ).limit(5).all()  # Lấy 5 để LLM có context phong phú hơn
 
-        
+        # Fallback nếu không tìm được
         if not products:
             products = db.query(Product).order_by(
                 Product.is_featured.desc(),
@@ -152,7 +171,9 @@ class AISalesAssistant:
             ))
         return items
 
-    
+    # ------------------------------------------------------------------
+    # LM Studio — Reply Generation (MỚI)
+    # ------------------------------------------------------------------
 
     def _build_products_context(self, items: List[RecommendedProductItem]) -> str:
         """Tạo context string để inject vào LLM prompt."""
@@ -186,16 +207,17 @@ class AISalesAssistant:
         """
         products_context = self._build_products_context(items)
 
-        
+        # Xây dựng messages — GIỜ DÙNG conversation_history THẬT SỰ
         messages: List[Dict[str, str]] = [
             {"role": "system", "content": SALES_SYSTEM_PROMPT}
         ]
 
-       
+        # Inject lịch sử hội thoại (schema đã có từ trước, giờ mới dùng)
         for hist_msg in (request.conversation_history or []):
             if hist_msg.role in ["user", "assistant", "system"]:
                 messages.append({"role": hist_msg.role, "content": hist_msg.content})
 
+        # Message hiện tại kèm context sản phẩm
         messages.append({
             "role": "user",
             "content": (
@@ -208,12 +230,14 @@ class AISalesAssistant:
 
         return lm_client.chat(
             messages=messages,
-            temperature=0.65,   
-            max_tokens=900,     
+            temperature=0.65,   # Điều chỉnh: 0.3 (nhất quán) ↔ 0.9 (sáng tạo)
+            max_tokens=900,     # Điều chỉnh theo độ dài mong muốn
             top_p=0.92,
         )
 
-   
+    # ------------------------------------------------------------------
+    # Fallback reply (giữ nguyên từ code cũ khi LM Studio offline)
+    # ------------------------------------------------------------------
 
     def _generate_fallback_reply(
         self,
@@ -252,25 +276,27 @@ class AISalesAssistant:
             base.insert(0, "Laptop nào pin trâu nhất trong tầm giá?")
         return base[:4]
 
-    
+    # ------------------------------------------------------------------
+    # Entry point chính
+    # ------------------------------------------------------------------
 
     def process_consultation(self, db: Session, request: AIChatRequest) -> AIChatResponse:
         user_msg = request.message.strip()
         lower_msg = user_msg.lower()
 
-       
+        # Bước 1: Extract budget
         extracted_budget = request.budget or self.extract_budget(user_msg)
 
-        
+        # Bước 2: DB Query lấy sản phẩm (rule-based, không thay đổi)
         products = self._query_products(db, lower_msg, extracted_budget)
         recommended_items = self._build_recommended_items(products)
-        
+        # Chỉ trả về tối đa 3 trong response
         display_items = recommended_items[:3]
 
-       
+        # Bước 3: Thử LM Studio reply
         llm_reply = self._generate_llm_reply(request, display_items)
 
-       
+        # Bước 4: Fallback nếu LM Studio offline
         final_reply = llm_reply or self._generate_fallback_reply(display_items, extracted_budget)
 
         return AIChatResponse(
