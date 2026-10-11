@@ -8,7 +8,7 @@ from app.models.product import Product
 from app.models.user import User
 from app.schemas.review import ReviewCreate, ReviewOut
 from app.core.security import get_current_user_optional, require_staff_or_admin
-from app.services.ml_service import classify_review_sentiment
+from app.services.ml_service import classify_review_sentiment, sentiment_model
 
 router = APIRouter(prefix="/reviews", tags=["Reviews & Sentiment"])
 
@@ -20,6 +20,12 @@ def get_product_reviews(product_id: int, db: Session = Depends(get_db)):
     ).order_by(Review.created_at.desc()).all()
     return reviews
 
+@router.get("/product/{product_id}/summary")
+def get_product_review_summary(product_id: int, db: Session = Depends(get_db)):
+    """API tóm tắt cảm xúc hàng loạt của sản phẩm bằng ML."""
+    reviews = db.query(Review).filter(Review.product_id == product_id, Review.is_approved == 1).all()
+    return sentiment_model.summarize_reviews(reviews)
+
 @router.post("/", response_model=ReviewOut)
 def submit_review(
     review_in: ReviewCreate,
@@ -30,10 +36,8 @@ def submit_review(
     if not product:
         raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
 
-    # 1. Run ML Sentiment Analysis Model
     label, confidence = classify_review_sentiment(review_in.comment)
 
-    # 2. Create Review Record
     review = Review(
         product_id=review_in.product_id,
         user_id=current_user.id if current_user else None,
@@ -48,7 +52,6 @@ def submit_review(
     db.add(review)
     db.flush()
 
-    # 3. Recalculate Product average rating
     stats = db.query(
         func.avg(Review.rating).label("avg_rating"),
         func.count(Review.id).label("count_rating")
