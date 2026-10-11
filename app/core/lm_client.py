@@ -136,6 +136,39 @@ class LMStudioClient:
             # Reset cache khi thành công
             self._available = True
             return content
+    def stream_chat(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.65,
+        max_tokens: int = 900,
+        top_p: float = 0.92,
+    ):
+        """
+        Gọi chat completion dạng Streaming qua OpenAI-compatible API (LM Studio/vLLM/Ollama).
+        Yield từng chunk văn bản theo thời gian thực.
+        """
+        if not self._client or not settings.LM_STUDIO_ENABLED:
+            return
+
+        try:
+            response = self._client.chat.completions.create(
+                model=settings.LM_STUDIO_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                stream=True,  # Kích hoạt streaming
+            )
+            for chunk in response:
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        yield delta.content
+            self._available = True
+        except Exception as e:
+            print(f"[LMStudio Stream Error] {e}")
+            self._available = False
+
 
         except (APIConnectionError, APITimeoutError):
             print(f"[LMStudio] ⚠️  Không kết nối được tới {settings.LM_STUDIO_URL} "

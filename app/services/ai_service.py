@@ -305,6 +305,60 @@ class AISalesAssistant:
             recommended_products=display_items,
             suggested_questions=self._get_suggested_questions(lower_msg),
         )
+    def process_consultation_stream(self, db: Session, request: AIChatRequest):
+        """
+        Xử lý tư vấn bán hàng trả về Generator streaming:
+        1. Gửi thẻ sản phẩm đề xuất trước tiên
+        2. Stream từng từ câu trả lời của AI
+        3. Gửi danh sách câu hỏi gợi ý khi hoàn thành
+        """
+        user_msg = request.message.strip()
+        lower_msg = user_msg.lower()
+
+        extracted_budget = request.budget or self.extract_budget(user_msg)
+        products = self._query_products(db, lower_msg, extracted_budget)
+        recommended_items = self._build_recommended_items(products)[:3]
+
+        # 1. Trả về metadata sản phẩm trước
+        yield {
+            "type": "products",
+            "recommended_products": [item.dict() for item in recommended_items]
+        }
+
+        # 2. Xây dựng prompt
+        products_context = self._build_products_context(recommended_items)
+        messages = [{"role": "system", "content": SALES_SYSTEM_PROMPT}]
+
+        for hist_msg in (request.conversation_history or []):
+            if hist_msg.role in ["user", "assistant", "system"]:
+                messages.append({"role": hist_msg.role, "content": hist_msg.content})
+
+        messages.append({
+            "role": "user",
+            "content": (
+                f"Yêu cầu của khách hàng: {request.message}\n\n"
+                f"Sản phẩm hệ thống đề xuất:\n{products_context}\n\n"
+                f"Hãy tư vấn tự nhiên, dùng link markdown cho tên sản phẩm."
+            )
+        })
+
+        # 3. Stream từng từ từ LM Studio
+        has_streamed = False
+        if lm_client.is_available():
+            for chunk in lm_client.stream_chat(messages=messages):
+                has_streamed = True
+                yield {"type": "content", "chunk": chunk}
+
+        if not has_streamed:
+            fallback = self._generate_fallback_reply(recommended_items, extracted_budget)
+            yield {"type": "content", "chunk": fallback}
+
+        # 4. Gửi câu hỏi gợi ý kết thúc
+        suggested_q = self._get_suggested_questions(lower_msg)
+        yield {
+            "type": "done",
+            "suggested_questions": suggested_q
+        }
 
 
 ai_sales_assistant = AISalesAssistant()
