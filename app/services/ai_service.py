@@ -1,16 +1,7 @@
-"""
-AI Sales Assistant — Hybrid Rule-based + LM Studio
-===================================================
-Kiến trúc 2 tầng:
-  Tầng 1: SQLAlchemy DB query để tìm sản phẩm phù hợp (rule-based, GIỮA NGUYÊN)
-  Tầng 2: LM Studio để viết câu trả lời tự nhiên (MỚI)
 
-Fallback: Nếu LM Studio không chạy → dùng reply template cũ (không crash)
-"""
 import re
 import json
-from typing import List, Dict, Any, Optional, Tuple
-
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -19,10 +10,6 @@ from app.schemas.ai import AIChatRequest, AIChatResponse, RecommendedProductItem
 from app.core.lm_client import lm_client
 
 
-# ------------------------------------------------------------------
-# System Prompt cho LM Studio
-# Điều chỉnh tại đây để thay đổi phong cách tư vấn của AI
-# ------------------------------------------------------------------
 SALES_SYSTEM_PROMPT = """Bạn là Trợ lý AI GearVN — chuyên gia tư vấn thiết bị công nghệ hàng đầu Việt Nam.
 
 Vai trò: Tư vấn sản phẩm công nghệ (laptop, PC, linh kiện, phụ kiện gaming) dựa trên nhu cầu khách hàng.
@@ -49,14 +36,8 @@ Format phản hồi:
 
 class AISalesAssistant:
 
-    # ------------------------------------------------------------------
-    # Budget Extraction (giữ nguyên)
-    # ------------------------------------------------------------------
-
     def extract_budget(self, text: str) -> Optional[float]:
-        """Trích xuất ngân sách từ câu nói tự nhiên của người dùng."""
         text = text.lower()
-        # Patterns: "20 triệu", "20tr", "20.5 triệu", "hai mươi triệu"
         m = re.search(r'(\d+(?:[\.,]\d+)?)\s*(?:triệu|tr|củ)', text)
         if m:
             val_str = m.group(1).replace(',', '.')
@@ -64,7 +45,6 @@ class AISalesAssistant:
                 return float(val_str) * 1_000_000
             except ValueError:
                 pass
-        # Pattern: "20,000,000" hoặc "20.000.000"
         m2 = re.search(r'(\d{1,3}(?:\.\d{3}){2,3})', text)
         if m2:
             try:
@@ -73,18 +53,12 @@ class AISalesAssistant:
                 pass
         return None
 
-    # ------------------------------------------------------------------
-    # DB Query Logic (giữ nguyên — rule-based nhưng chính xác)
-    # ------------------------------------------------------------------
-
     def _query_products(
         self,
         db: Session,
         lower_msg: str,
         extracted_budget: Optional[float]
     ) -> List[Product]:
-        """Tìm sản phẩm phù hợp từ DB dựa trên keyword + budget."""
-        # Keyword mapping: category detection
         category_keywords = {
             "laptop":   ["laptop", "máy tính xách tay", "macbook", "notebook"],
             "pc":       ["pc", "máy bàn", "cây máy tính", "case", "dàn máy"],
@@ -102,62 +76,38 @@ class AISalesAssistant:
 
         query = db.query(Product)
 
-        # Filter theo budget (15% tolerance — có thể điều chỉnh)
         if extracted_budget:
             query = query.filter(Product.promo_price <= extracted_budget * 1.15)
 
-        # Filter theo category
         if target_cat == "laptop":
-            query = query.filter(or_(
-                Product.name.ilike("%Laptop%"),
-                Product.slug.ilike("%laptop%")
-            ))
+            query = query.filter(or_(Product.name.ilike("%Laptop%"), Product.slug.ilike("%laptop%")))
         elif target_cat == "pc":
-            query = query.filter(or_(
-                Product.name.ilike("%PC%"),
-                Product.slug.ilike("%pc%"),
-                Product.name.ilike("%Bộ máy tính%")
-            ))
+            query = query.filter(or_(Product.name.ilike("%PC%"), Product.name.ilike("%Máy tính để bàn%")))
         elif target_cat == "vga":
-            query = query.filter(or_(
-                Product.name.ilike("%VGA%"),
-                Product.name.ilike("%Card%"),
-                Product.pc_part_type == "vga"
-            ))
+            query = query.filter(or_(Product.name.ilike("%VGA%"), Product.name.ilike("%GeForce%"), Product.name.ilike("%Radeon%")))
         elif target_cat == "monitor":
-            query = query.filter(or_(
-                Product.name.ilike("%Màn hình%"),
-                Product.pc_part_type == "monitor"
-            ))
+            query = query.filter(Product.name.ilike("%Màn hình%"))
         elif target_cat == "keyboard":
             query = query.filter(Product.name.ilike("%Bàn phím%"))
         elif target_cat == "mouse":
             query = query.filter(Product.name.ilike("%Chuột%"))
 
-        # Sắp xếp: rating cao + bán nhiều trước
-        products = query.order_by(
-            Product.rating_avg.desc(),
-            Product.sales_count.desc()
-        ).limit(5).all()  # Lấy 5 để LLM có context phong phú hơn
+        products = query.order_by(Product.rating_avg.desc(), Product.sales_count.desc()).limit(5).all()
 
-        # Fallback nếu không tìm được
         if not products:
-            products = db.query(Product).order_by(
-                Product.is_featured.desc(),
-                Product.sales_count.desc()
-            ).limit(5).all()
+            products = db.query(Product).order_by(Product.is_featured.desc(), Product.sales_count.desc()).limit(3).all()
 
         return products
 
     def _build_recommended_items(self, products: List[Product]) -> List[RecommendedProductItem]:
-        """Chuyển Product ORM objects sang RecommendedProductItem schema."""
         items = []
         for p in products:
             specs = {}
-            try:
-                specs = json.loads(p.specs_json) if p.specs_json else {}
-            except Exception:
-                pass
+            if p.specs_json:
+                try:
+                    specs = json.loads(p.specs_json)
+                except Exception:
+                    pass
             items.append(RecommendedProductItem(
                 id=p.id,
                 name=p.name,
@@ -167,57 +117,31 @@ class AISalesAssistant:
                 original_price=p.original_price,
                 thumbnail=p.thumbnail,
                 specs=specs,
-                reason="",  # LLM sẽ generate reason trong reply
+                reason=f"Đánh giá {p.rating_avg}★, đã bán {p.sales_count} sản phẩm",
             ))
         return items
 
-    # ------------------------------------------------------------------
-    # LM Studio — Reply Generation (MỚI)
-    # ------------------------------------------------------------------
-
     def _build_products_context(self, items: List[RecommendedProductItem]) -> str:
-        """Tạo context string để inject vào LLM prompt."""
-        if not items:
-            return "Không tìm thấy sản phẩm phù hợp."
         lines = []
-        for i, item in enumerate(items, 1):
-            specs_str = ", ".join([f"{k}: {v}" for k, v in item.specs.items()]) if item.specs else "Chưa có thông số"
+        for idx, item in enumerate(items, 1):
+            specs_str = ", ".join(f"{k}: {v}" for k, v in list(item.specs.items())[:3])
             savings = int(item.original_price - item.promo_price)
             lines.append(
-                f"{i}. {item.name} (slug: {item.slug})\n"
-                f"   Thương hiệu: {item.brand}\n"
-                f"   Giá KM: {int(item.promo_price):,}đ | Giá gốc: {int(item.original_price):,}đ"
+                f"{idx}. [{item.name}](/product/{item.slug})\n"
+                f"   Hãng: {item.brand} | Giá: {int(item.promo_price):,}đ"
                 + (f" | Tiết kiệm: {savings:,}đ" if savings > 0 else "") + "\n"
                 f"   Thông số: {specs_str}"
             )
         return "\n\n".join(lines)
 
-    def _generate_llm_reply(
-        self,
-        request: AIChatRequest,
-        items: List[RecommendedProductItem]
-    ) -> Optional[str]:
-        """
-        Gọi LM Studio để tạo câu trả lời tư vấn tự nhiên.
-
-        Tham số LLM có thể điều chỉnh:
-        - temperature=0.65 : Tự nhiên, sáng tạo nhưng nhất quán
-        - max_tokens=900   : Đủ cho tư vấn 3 sản phẩm chi tiết
-        - top_p=0.92       : Nucleus sampling, lọc bỏ tokens xác suất thấp
-        """
+    def _generate_llm_reply(self, request: AIChatRequest, items: List[RecommendedProductItem]) -> Optional[str]:
         products_context = self._build_products_context(items)
+        messages: List[Dict[str, str]] = [{"role": "system", "content": SALES_SYSTEM_PROMPT}]
 
-        # Xây dựng messages — GIỜ DÙNG conversation_history THẬT SỰ
-        messages: List[Dict[str, str]] = [
-            {"role": "system", "content": SALES_SYSTEM_PROMPT}
-        ]
-
-        # Inject lịch sử hội thoại (schema đã có từ trước, giờ mới dùng)
         for hist_msg in (request.conversation_history or []):
             if hist_msg.role in ["user", "assistant", "system"]:
                 messages.append({"role": hist_msg.role, "content": hist_msg.content})
 
-        # Message hiện tại kèm context sản phẩm
         messages.append({
             "role": "user",
             "content": (
@@ -228,27 +152,13 @@ class AISalesAssistant:
             )
         })
 
-        return lm_client.chat(
-            messages=messages,
-            temperature=0.65,   # Điều chỉnh: 0.3 (nhất quán) ↔ 0.9 (sáng tạo)
-            max_tokens=900,     # Điều chỉnh theo độ dài mong muốn
-            top_p=0.92,
-        )
+        return lm_client.chat(messages=messages, temperature=0.65, max_tokens=900, top_p=0.92)
 
-    # ------------------------------------------------------------------
-    # Fallback reply (giữ nguyên từ code cũ khi LM Studio offline)
-    # ------------------------------------------------------------------
-
-    def _generate_fallback_reply(
-        self,
-        items: List[RecommendedProductItem],
-        extracted_budget: Optional[float]
-    ) -> str:
+    def _generate_fallback_reply(self, items: List[RecommendedProductItem], extracted_budget: Optional[float]) -> str:
         budget_str = f"{int(extracted_budget):,}đ" if extracted_budget else "linh hoạt"
         parts = [
             f"Dạ chào bạn! Em là **Trợ lý AI GearVN**.",
-            f"Theo nhu cầu của bạn (Ngân sách: **{budget_str}**), "
-            f"em đề xuất các sản phẩm sau:"
+            f"Theo nhu cầu của bạn (Ngân sách: **{budget_str}**), em đề xuất các sản phẩm sau:"
         ]
         for idx, item in enumerate(items[:3], 1):
             savings = int(item.original_price - item.promo_price)
@@ -262,7 +172,6 @@ class AISalesAssistant:
 
     @staticmethod
     def _get_suggested_questions(lower_msg: str) -> List[str]:
-        """Câu hỏi gợi ý động dựa trên nội dung câu hỏi."""
         base = [
             "So sánh hiệu năng giữa các sản phẩm được gợi ý",
             "Chính sách bảo hành và trả góp như thế nào?",
@@ -276,27 +185,16 @@ class AISalesAssistant:
             base.insert(0, "Laptop nào pin trâu nhất trong tầm giá?")
         return base[:4]
 
-    # ------------------------------------------------------------------
-    # Entry point chính
-    # ------------------------------------------------------------------
-
     def process_consultation(self, db: Session, request: AIChatRequest) -> AIChatResponse:
         user_msg = request.message.strip()
         lower_msg = user_msg.lower()
 
-        # Bước 1: Extract budget
         extracted_budget = request.budget or self.extract_budget(user_msg)
-
-        # Bước 2: DB Query lấy sản phẩm (rule-based, không thay đổi)
         products = self._query_products(db, lower_msg, extracted_budget)
         recommended_items = self._build_recommended_items(products)
-        # Chỉ trả về tối đa 3 trong response
         display_items = recommended_items[:3]
 
-        # Bước 3: Thử LM Studio reply
         llm_reply = self._generate_llm_reply(request, display_items)
-
-        # Bước 4: Fallback nếu LM Studio offline
         final_reply = llm_reply or self._generate_fallback_reply(display_items, extracted_budget)
 
         return AIChatResponse(
@@ -305,13 +203,8 @@ class AISalesAssistant:
             recommended_products=display_items,
             suggested_questions=self._get_suggested_questions(lower_msg),
         )
+
     def process_consultation_stream(self, db: Session, request: AIChatRequest):
-        """
-        Xử lý tư vấn bán hàng trả về Generator streaming:
-        1. Gửi thẻ sản phẩm đề xuất trước tiên
-        2. Stream từng từ câu trả lời của AI
-        3. Gửi danh sách câu hỏi gợi ý khi hoàn thành
-        """
         user_msg = request.message.strip()
         lower_msg = user_msg.lower()
 
@@ -342,7 +235,7 @@ class AISalesAssistant:
             )
         })
 
-        # 3. Stream từng từ từ LM Studio
+        # 3. Stream text từ LM Studio
         has_streamed = False
         if lm_client.is_available():
             for chunk in lm_client.stream_chat(messages=messages):
@@ -353,7 +246,7 @@ class AISalesAssistant:
             fallback = self._generate_fallback_reply(recommended_items, extracted_budget)
             yield {"type": "content", "chunk": fallback}
 
-        # 4. Gửi câu hỏi gợi ý kết thúc
+        # 4. Gửi câu hỏi gợi ý
         suggested_q = self._get_suggested_questions(lower_msg)
         yield {
             "type": "done",
