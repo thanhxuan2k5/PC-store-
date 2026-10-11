@@ -1,8 +1,8 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class AIChatMessage(BaseModel):
-    role: str # 'user' or 'assistant' or 'system'
+    role: str
     content: str
 
 class AIChatRequest(BaseModel):
@@ -24,7 +24,7 @@ class RecommendedProductItem(BaseModel):
 
 class AIChatResponse(BaseModel):
     reply: str
-    intent: Optional[str] = "consultation" # 'consultation', 'pc_builder', 'price_check', 'faq'
+    intent: Optional[str] = "consultation"
     recommended_products: List[RecommendedProductItem] = []
     suggested_questions: List[str] = []
 
@@ -45,3 +45,16 @@ class PCBuilderCompatibilityResponse(BaseModel):
     estimated_wattage: int = 0
     recommended_psu_wattage: int = 500
     total_price: float = 0.0
+
+# Schema riêng cho AI Auto PC Builder
+class AIAutoPCBuildRequest(BaseModel):
+    budget: float = Field(..., description="Ngân sách dự kiến (VND)")
+    purpose: str = Field("gaming", description="Mục đích sử dụng: 'gaming', 'do_hoa', 'van_phong'")
+    notes: Optional[str] = None
+
+class AIAutoPCBuildResponse(BaseModel):
+    total_price: float
+    target_budget: float
+    is_compatible: bool
+    summary_advice: str
+    parts: Dict[str, Optional[RecommendedProductItem]] = {}
