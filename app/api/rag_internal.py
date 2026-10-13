@@ -27,49 +27,153 @@ SAMPLE_DOCS = [
     {
         "title": "Chính Sách Bảo Hành & Đổi Trả Sản Phẩm Công Nghệ GearVN 2026",
         "category": "Chính sách bảo hành",
-        "tags": "bao hanh, doi tra, 1 doi 1, loi nha san xuat",
-        "content_text": """1. QUY ĐỊNH ĐỔI TRẢ 1 ĐỔI 1 TRONG 30 NGÀY ĐẦU:
-- Áp dụng cho tất cả các sản phẩm Laptop, PC Gaming, Linh kiện phần cứng (CPU, VGA, Mainboard, RAM, SSD, Nguồn) phát sinh lỗi kỹ thuật phần cứng do nhà sản xuất.
-- Điều kiện: Sản phẩm còn nguyên vẹn, không móp méo, trầy xước nặng, không có dấu hiệu vào nước hay can thiệp sửa chữa ngoài, đầy đủ hộp (box), sách hướng dẫn và phụ kiện đi kèm.
+        "tags": "bao hanh, doi tra, 1 doi 1, loi nha san xuat, tu choi bao hanh",
+        "content_text": """1. QUY ĐỊNH ĐỔI TRẢ 1 ĐỔI 1 TRONG 30 NGÀY ĐẦU TIÊN:
+- Phạm vi áp dụng: Toàn bộ Laptop Gaming, Laptop Văn phòng, Dàn PC G-Studio, và Linh kiện phần cứng chính hãng (CPU, Mainboard, VGA, RAM, SSD, Nguồn PSU).
+- Điều kiện hưởng chính sách 1 đổi 1:
+  + Sản phẩm phát sinh lỗi kỹ thuật phần cứng do nhà sản xuất (được xác nhận bởi kỹ thuật viên GearVN hoặc TTBH của hãng).
+  + Sản phẩm còn nguyên vẹn 100% ngoại quan: Không móp méo, nứt vỡ, trầy xước nặng, không có dấu hiệu vào nước hay oxy hóa.
+  + Đầy đủ hộp (box) trùng số Serial Number (S/N), sách hướng dẫn, phiếu bảo hành và toàn bộ phụ kiện kèm theo.
+- Phương án xử lý khi hết hàng: Khách hàng được đổi sang model tương đương hoặc nhận hoàn tiền 100% giá trị mua ban đầu.
 
-2. QUY TRÌNH TIẾP NHẬN BẢO HÀNH:
-- Bước 1: Nhân viên kỹ thuật kiểm tra ngoại quan và xác nhận số Serial Number (S/N) trên hệ thống ERP GearVN.
-- Bước 2: Thời gian kiểm tra lỗi nhanh tại quầy từ 15 - 30 phút.
-- Bước 3: Nếu xác định lỗi phần cứng rõ ràng trong 30 ngày đầu, xuất kho đổi ngay sản phẩm mới 100% cùng model cho khách. Trường hợp hết hàng cùng model, khách hàng được đổi sang model tương đương hoặc hoàn tiền 100%."""
+2. QUY TRÌNH TIẾP NHẬN BẢO HÀNH CHUẨN TẠI QUẦY:
+- Bước 1: Tiếp nhận và tra cứu lịch sử mua hàng qua Số điện thoại hoặc mã Serial Number (S/N) trên hệ thống ERP GearVN.
+- Bước 2: Kỹ thuật viên thẩm định ngoại quan và test lỗi nhanh trong vòng 15 - 30 phút.
+- Bước 3: Trong 30 ngày đầu, xuất kho đổi ngay sản phẩm mới 100% tại quầy. Sau 30 ngày, gửi TTBH chính hãng xử lý từ 7 - 14 ngày làm việc (hỗ trợ cho mượn máy/linh kiện dùng tạm).
+
+3. CÁC TRƯỜNG HỢP TỪ CHỐI BẢO HÀNH:
+- Tem bảo hành hoặc tem niêm phong bị rách, mờ, cạo sửa hoặc dán đè.
+- Sản phẩm có dấu hiệu can thiệp, sửa chữa hoặc tháo rời tại các cơ sở không được ủy quyền.
+- Cháy nổ IC, cong gãy chân socket CPU, cấn móp màn hình, rơi rớt, sét đánh hoặc chất lỏng xâm nhập."""
     },
     {
         "title": "Quy Định Bảo Hành Màn Hình và Tiêu Chuẩn Điểm Chết (Dead Pixel)",
         "category": "Tiêu chuẩn kỹ thuật",
-        "tags": "man hinh, diem chet, dead pixel, asus, lg, samsung",
-        "content_text": """TIÊU CHUẨN XỬ LÝ ĐIỂM CHẾT MÀN HÌNH CỦA CÁC HÃNG:
-- Hãng ASUS: Đổi mới màn hình nếu có từ 3 điểm chết sáng (Bright dot) hoặc 5 điểm chết tối (Dark dot) trở lên trong vòng 3 năm. Riêng dòng ROG/TUF cao cấp hỗ trợ Zero Bright Dot trong 1 năm đầu.
-- Hãng LG: Áp dụng đổi mới/thay panel nếu phát hiện từ 3 điểm chết trở lên đối với màn hình UltraGear và UltraFine.
-- Hãng Samsung: Áp dụng theo tiêu chuẩn tối thiểu 5 điểm chết đối với các dòng Odyssey Gaming.
-- Khách hàng mua kèm gói 'Bảo Hành VIP GearVN' được hỗ trợ 1 đổi 1 ngay lập tức nếu xuất hiện từ 1 điểm chết bất kỳ trong 3 tháng đầu."""
+        "tags": "man hinh, diem chet, dead pixel, asus, lg, samsung, dell, ho sang",
+        "content_text": """1. PHÂN LOẠI ĐIỂM CHẾT TRÊN MÀN HÌNH:
+- Điểm chết sáng (Bright Dot): Điểm ảnh luôn phát sáng màu trắng, đỏ, xanh trên nền đen hoàn toàn.
+- Điểm chết tối (Dark Dot): Điểm ảnh luôn có màu đen trên nền trắng hoặc nền sáng.
+- Hiện tượng hở sáng (IPS Glow): Đặc tính vật lý của tấm nền IPS, chỉ bảo hành khi hở sáng quá mức thành vệt sáng lớn thấy rõ dưới ánh đèn bình thường.
+
+2. TIÊU CHUẨN BẢO HÀNH ĐỔI MỚI THEO TỪNG HÃNG:
+- Hãng ASUS: Đổi mới màn hình nếu có từ 3 điểm sáng hoặc 5 điểm tối trở lên trong 36 tháng. Riêng dòng ROG và ProArt áp dụng chuẩn Zero Bright Dot (ZBD) đổi mới ngay nếu có từ 1 điểm sáng trong 12 tháng đầu.
+- Hãng LG: Đổi mới/thay panel nếu phát hiện từ 3 điểm chết bất kỳ trong 24 tháng đối với màn hình UltraGear và UltraFine.
+- Hãng Samsung: Tiêu chuẩn tối thiểu từ 5 điểm chết trở lên đối với dòng Odyssey Gaming.
+- Hãng Dell UltraSharp: Đổi màn hình mới ngay khi xuất hiện từ 1 điểm sáng (Premium Panel Exchange) trong suốt 3 năm bảo hành.
+
+3. GÓI 'BẢO HÀNH MÀN HÌNH VIP GEARVN':
+- Hỗ trợ 1 đổi 1 ngay lập tức nếu xuất hiện từ 1 điểm chết bất kỳ trong 90 ngày đầu tiên.
+- Miễn phí cân màu màn hình bằng thiết bị SpyderX Elite trọn đời máy."""
     },
     {
-        "title": "Chính Sách Chiết Khấu Mua Hàng & Phúc Lợi Cho Nhân Viên GearVN",
+        "title": "Chính Sách Bảo Hành Pin, Bộ Sạc & Bản Lề Laptop GearVN",
+        "category": "Chính sách bảo hành",
+        "tags": "pin laptop, chai pin, adapter, ban le, laptop",
+        "content_text": """1. QUY ĐỊNH BẢO HÀNH PIN LAPTOP:
+- Pin laptop tích hợp liền máy được bảo hành tiêu chuẩn 12 tháng kể từ ngày kích hoạt hóa đơn mua hàng.
+- Điều kiện thay pin mới miễn phí:
+  + Pin bị phồng rộp làm cong vênh vỏ máy hoặc bàn phím trong 12 tháng đầu.
+  + Dung lượng pin thực tế (Full Charge Capacity) tụt dưới 70% so với thiết kế ban đầu khi số chu kỳ sạc (Cycle Count) dưới 350 lần.
+  + Máy không nhận pin hoặc rút sạc là sập nguồn ngay lập tức do lỗi mạch điều khiển pin (BMS).
+
+2. BẢO HÀNH CỦ SẠC & DÂY NGUỒN:
+- Củ sạc chính hãng đi kèm máy được bảo hành đổi mới 12 tháng nếu không vào điện do lỗi linh kiện bên trong (không nứt vỡ vỏ, không đứt gãy dây cáp).
+
+3. CHÍNH SÁCH BẢO DƯỠNG BẢN LÈ LAPTOP TRỌN ĐỜI:
+- Miễn phí vệ sinh, tra dầu bôi trơn và nới lỏng/siết chặt độ căng bản lề trọn đời máy tại tất cả showroom GearVN.
+- Nếu bản lề bị kẹt cứng tự phát do lỗi khung kim loại trong thời hạn bảo hành: Đổi cụm vỏ/bản lề mới miễn phí.
+- Nếu gãy do va đập ngoại lực: GearVN hỗ trợ hàn gia cố chân ốc hoặc trợ giá 50% chi phí linh kiện thay thế từ hãng."""
+    },
+    {
+        "title": "Quy Trình Kiểm Tra Kỹ Thuật & Lắp Ráp Dàn PC Gaming G-Studio",
+        "category": "Tiêu chuẩn kỹ thuật",
+        "tags": "lap rap pc, thermal paste, psu, nguon, furmark, cinebench, stress test",
+        "content_text": """1. TIÊU CHUẨN AN TOÀN TRƯỚC KHI LẮP RÁP:
+- Bắt buộc đeo vòng tay khử tĩnh điện ESD trước khi chạm vào linh kiện trần.
+- Soi kính lúp kiểm tra chân socket CPU (LGA1700, AM5), đảm bảo 100% không cong lệch chân socket trước khi lắp CPU.
+
+2. NGUYÊN TẮC KỸ THUẬT LẮP ĐẶT:
+- Tra keo tản nhiệt CPU: Dùng keo cao cấp (Noctua NT-H1, Kryonaut, MX-4), phương pháp 1 chấm hạt đậu ở tâm. Tuyệt đối không để keo tràn xuống socket.
+- Tính toán công suất bộ nguồn (PSU): Công suất nguồn danh định phải đạt tối thiểu bằng Tổng TDP hệ thống x 1.25 (dư tải 25% an toàn).
+- Cấp nguồn cho VGA RTX 40 Series: Từ RTX 4070 trở lên bắt buộc dùng cáp PCIe 8-pin riêng biệt từ nguồn, KHÔNG dùng cáp chia Y daisy-chain. Đầu nối 12VHPWR phải cắm ngập sát khớp, không bẻ gập dây sát đầu cắm.
+
+3. CHECKLIST KIỂM THỬ TRƯỚC KHI BÀN GIAO:
+- Kích hoạt XMP / EXPO trong BIOS để RAM chạy đúng tốc độ danh định.
+- Chạy Cinebench R23 trong 10 phút: Nhiệt độ CPU tối đa không quá 88 độ C (AIO) hoặc 92 độ C (tản khí).
+- Chạy FurMark Burn-in 15 phút: Nhiệt độ GPU Hotspot dưới 85 độ C, quạt êm ái, không có tiếng rít coil whine bất thường."""
+    },
+    {
+        "title": "Chính Sách Mua Hàng Nội Bộ, Chiết Khấu & Phúc Lợi Nhân Viên GearVN",
         "category": "Chính sách nội bộ",
-        "tags": "chiet khau nhan vien, mua hang noi bo, tra gop 0%",
-        "content_text": """CHÍNH SÁCH MUA HÀNG NỘI BỘ DÀNH CHO NHÂN VIÊN CHÍNH THỨC:
-1. Mức giảm giá chiết khấu:
-- Linh kiện PC (CPU, Mainboard, VGA, RAM, SSD): Giảm trực tiếp 8% trên giá bán niêm yết hoặc tính theo giá vốn nhập kho + 2% chi phí vận hành (tùy mức nào thấp hơn).
-- Gaming Gear (Bàn phím, Chuột, Tai nghe): Giảm 12% - 15%.
-- Laptop Gaming & PC Lắp sẵn: Giảm 7% tối đa 3.000.000 VNĐ/sản phẩm.
+        "tags": "chiet khau nhan vien, phuc loi, tra gop tru luong, mua hang noi bo",
+        "content_text": """1. ĐỐI TƯỢNG VÀ MỨC GIẢM GIÁ CHIẾT KHẤU:
+- Áp dụng cho Cán bộ - Nhân viên (CBNV) chính thức ký HĐLĐ từ 3 tháng trở lên.
+- Linh kiện PC (CPU, Main, VGA, RAM, SSD, Nguồn): Giảm trực tiếp 8% trên giá niêm yết hoặc tính theo giá vốn nhập kho + 2% chi phí vận hành (áp dụng mức nào thấp hơn).
+- Gaming Gear (Bàn phím, Chuột, Tai nghe): Giảm từ 12% đến 15%.
+- Laptop Gaming, Laptop Văn phòng & PC G-Studio: Giảm 7%, tối đa 3.000.000 VNĐ/sản phẩm.
+- Màn hình máy tính: Giảm 6% trên giá khuyến mãi.
 
-2. Hạn mức mua hàng: Mỗi nhân viên được hưởng hạn mức tối đa 50.000.000 VNĐ/năm cho người thân và bản thân. Cần đăng ký qua cổng Portal HR trước 24h."""
+2. HẠN MỨC & CHÍNH SÁCH TRẢ GÓP TRỪ LƯƠNG:
+- Hạn mức mua hàng ưu đãi: Tối đa 50.000.000 VNĐ/năm/nhân viên (làm mới ngày 01/01 hàng năm).
+- Trả góp 0% trừ lương: Đơn hàng từ 10.000.000đ đến 35.000.000đ được chia đều khấu trừ vào lương trong 3 đến 6 tháng.
+
+3. QUY TRÌNH PHÊ DUYỆT:
+- Nhân viên gửi yêu cầu qua Portal HR trước 24 giờ để HR và Kế toán phê duyệt mã Internal Coupon."""
     },
     {
-        "title": "Quy Trình Kiểm Kê & Nhập Xuất Kho Linh Kiện Máy Tính",
+        "title": "Quy Trình Thu Cũ Đổi Mới (Trade-in) Laptop & Linh Kiện PC",
         "category": "Quy trình vận hành",
-        "tags": "kho, nhap kho, xuat kho, serial, linh kien",
-        "content_text": """QUY TRÌNH QUẢN LÝ KHO & BẢO QUẢN THIẾT BỊ:
-1. Nhập kho linh kiện:
-- Toàn bộ linh kiện phần cứng (CPU, Mainboard, VGA, RAM, SSD) phải được quét mã vạch Serial Number (S/N) vào phần mềm trước khi dán tem niêm phong GearVN.
-- Khu vực lưu trữ linh kiện điện tử phải duy trì độ ẩm phòng dưới 60% và nhiệt độ ổn định 22-26 độ C để chống tĩnh điện và oxy hóa chân tiếp xúc.
+        "tags": "trade in, thu cu doi moi, len doi laptop, dinh gia may cu, tro gia",
+        "content_text": """1. ĐIỀU KIỆN TIẾP NHẬN TRADE-IN:
+- Laptop Gaming và Ultrabook văn phòng chính hãng sản xuất từ năm 2020 trở lại đây.
+- VGA NVIDIA GTX 16 Series trở lên, RTX 20/30/40 Series (không nhận VGA rỉ sét, trâu cày nặng).
 
-2. Xuất kho giao hàng:
-- Kiểm tra trùng khớp S/N giữa hóa đơn bán hàng và vỏ hộp sản phẩm trước khi bàn giao cho bộ phận Logistics."""
+2. TIÊU CHUẨN ĐỊNH GIÁ 4 CẤP ĐỘ:
+- Loại A (Đẹp như mới 98 - 99%, pin chai <15%, đủ sạc và hộp): Thu 75% - 80% giá thị trường máy cũ.
+- Loại B (Xước xát nhẹ 90 - 95%, pin chai 15-25%, đủ sạc): Thu 65% - 70% giá thị trường.
+- Loại C (Cấn móp nhẹ 80 - 85%, pin chai >25%, màn hình có đốm sáng nhẹ): Thu 50% - 60% giá thị trường.
+- Loại D (Lỗi chức năng: liệt phím, chết cổng, bể màn): Định giá thu theo xác linh kiện.
+
+3. CHÍNH SÁCH TRỢ GIÁ LÊN ĐỜI (TRADE-UP BONUS):
+- Lên đời máy mới trên 20 triệu: Trợ giá thêm 500.000 VNĐ vào giá thu máy cũ.
+- Lên đời máy mới trên 35 triệu: Trợ giá thêm 1.000.000 VNĐ.
+- Lên đời máy mới trên 50 triệu: Trợ giá thêm 1.500.000 VNĐ.
+- Miễn phí 100% công sao lưu và chuyển dữ liệu từ máy cũ sang máy mới tại quầy."""
+    },
+    {
+        "title": "Quy Trình Hướng Dẫn Mua Hàng Trả Góp 0% Lãi Suất Tại GearVN",
+        "category": "Quy trình vận hành",
+        "tags": "tra gop 0%, the tin dung, home credit, hd saison, can cuoc cong dan",
+        "content_text": """1. HÌNH THỨC 1: TRẢ GÓP 0% QUA THẺ TÍN DỤNG (CREDIT CARD):
+- Ngân hàng hỗ trợ: Hơn 25 ngân hàng lớn (Vietcombank, Techcombank, MB, VPBank, ACB, TPBank, Sacombank, HSBC, VIB...).
+- Điều kiện: Thẻ tín dụng Visa/Mastercard/JCB còn hạn mức khả dụng bằng hoặc lớn hơn giá trị chuyển đổi.
+- Kỳ hạn linh hoạt: 3, 6, 9, 12 tháng với 0% lãi suất hàng tháng.
+- Phí chuyển đổi giao dịch: Từ 1.8% đến 3.8% thu một lần duy nhất theo biểu phí cổng thanh toán MPOS/Alepay.
+- Thời gian duyệt: Quẹt thẻ tại quầy hoặc thanh toán online trên web, hoàn tất chuyển đổi trong 3 phút.
+
+2. HÌNH THỨC 2: TRẢ GÓP QUA CÔNG TY TÀI CHÍNH (HOME CREDIT / HD SAISON):
+- Độ tuổi áp dụng: Công dân Việt Nam từ đủ 18 tuổi đến 60 tuổi.
+- Giấy tờ yêu cầu: Bản gốc Căn cước công dân (CCCD) gắn chip còn hiệu lực.
+- Tỷ lệ trả trước: Trả trước từ 10% - 30% đối với đơn dưới 25 triệu; trả trước 30% - 40% đối với đơn trên 25 triệu.
+- Thời gian thẩm định: Nhân viên tài chính duyệt hồ sơ tại quầy từ 15 - 20 phút, duyệt xong nhận máy ngay."""
+    },
+    {
+        "title": "Quy Trình Đóng Gói Bảo Vệ Linh Kiện & Giao Hàng Hỏa Tốc Toàn Quốc",
+        "category": "Quy trình vận hành",
+        "tags": "giao hang hoa toc, dong goi, xop khi, chong soc, dong kiem",
+        "content_text": """1. GIAO HÀNG HỎA TỐC 2 GIỜ NỘI THÀNH (TP.HCM & HÀ NỘI):
+- Cam kết giao hàng tận tay trong 2 giờ kể từ khi xác nhận đơn đối với đơn đặt trước 17h30.
+- Miễn phí vận chuyển 100% cho đơn hàng từ 3.000.000 VNĐ trở lên trong bán kính 10km.
+- Khách hàng được quyền kiểm tra ngoại quan cùng shipper trước khi thanh toán COD.
+
+2. TIÊU CHUẨN ĐÓNG GÓI 4 LỚP CHO ĐƠN LIÊN TỈNH:
+- Lớp 1: Bọc màng PE chống thấm nước và bụi bẩn.
+- Lớp 2: Quấn tối thiểu 3 đến 4 vòng xốp bóng khí (Bubble wrap) dày quanh toàn bộ 6 mặt hộp.
+- Lớp 3: Đặt vào thùng carton 5 lớp cứng cáp, chèn chặt mút xốp chống xê dịch.
+- Lớp 4: Dán băng dán cảnh báo màu đỏ 'HÀNG DỄ VỠ - XIN NHẸ TAY' và tem niêm phong bảo mật GearVN.
+
+3. CAM KẾT ĐỀN BÙ SỰ CỐ VẬN CHUYỂN:
+- Nếu hàng bị móp méo, nứt vỡ hoặc thất lạc trong quá trình vận chuyển, GearVN xuất kho gửi ngay sản phẩm mới 100% trong vòng 24 giờ. Toàn bộ chi phí khiếu nại với đơn vị vận chuyển do GearVN tự chịu trách nhiệm."""
     }
 ]
 

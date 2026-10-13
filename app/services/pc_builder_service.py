@@ -8,6 +8,7 @@ from app.schemas.ai import (
     RecommendedProductItem,
     AIAutoPCBuildResponse
 )
+from app.services.jev_service import jev_service
 
 class PCBuilderService:
     def check_compatibility(self, db: Session, req: PCBuilderCompatibilityRequest) -> PCBuilderCompatibilityResponse:
@@ -31,12 +32,24 @@ class PCBuilderService:
                 total_price += p.promo_price
 
         def get_specs(prod):
-            if not prod or not prod.specs_json:
+            if not prod:
                 return {}
-            try:
-                return json.loads(prod.specs_json)
-            except Exception:
-                return {}
+            specs = {}
+            if prod.specs_json:
+                try:
+                    specs = json.loads(prod.specs_json)
+                except Exception:
+                    specs = {}
+            # TypeSafe AI Jev Extractor: Tự động trích xuất bổ sung nếu thiếu trường
+            if not specs.get("socket") or not specs.get("ram_type") or not specs.get("wattage"):
+                jev_res = jev_service.extract_hardware_specs(f"{prod.name} {prod.short_desc or ''}")
+                if not specs.get("socket") and jev_res.socket:
+                    specs["socket"] = jev_res.socket
+                if not specs.get("ram_type") and jev_res.ram_type:
+                    specs["ram_type"] = jev_res.ram_type
+                if not specs.get("wattage") and jev_res.wattage:
+                    specs["wattage"] = jev_res.wattage
+            return specs
 
         cpu_specs = get_specs(cpu)
         main_specs = get_specs(mainboard)

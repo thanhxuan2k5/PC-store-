@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     LM_STUDIO_ENABLED: bool = os.getenv("LM_STUDIO_ENABLED", "true").lower() == "true"
     LM_STUDIO_TIMEOUT: int = int(os.getenv("LM_STUDIO_TIMEOUT", "30"))
 
+    # TypeSafe AI — Jev System-One Decision Engine
+    TYPESAFE_AI_API_KEY: str = os.getenv("TYPESAFE_AI_API_KEY") or os.getenv("JEV_API_KEY", "")
+    JEV_BASE_URL: str = os.getenv("JEV_BASE_URL", "https://api.typesafe.ai/v1")
+    JEV_MODEL: str = os.getenv("JEV_MODEL", "jev-decision-v1")
+    JEV_ENABLED: bool = os.getenv("JEV_ENABLED", "true").lower() == "true"
+    JEV_TIMEOUT: int = int(os.getenv("JEV_TIMEOUT", "10"))
+
     class Config:
         env_file = ".env"
         extra = "allow"

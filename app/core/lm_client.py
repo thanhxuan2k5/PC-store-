@@ -52,7 +52,7 @@ class LMStudioClient:
     def chat(
         self,
         messages: List[Dict[str, str]],
-        temperature: float = 0.7,
+        temperature: float = 0.8,
         max_tokens: int = 800,
         top_p: float = 0.95,
         json_mode: bool = False,

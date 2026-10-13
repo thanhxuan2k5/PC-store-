@@ -8,15 +8,20 @@ from sklearn.metrics.pairwise import cosine_similarity
 from app.models.internal_doc import InternalDoc
 from app.schemas.rag import RAGCitation, RAGQueryResponse
 from app.core.lm_client import lm_client
+from app.services.jev_service import jev_service
 
-SYSTEM_PROMPT = """Bạn là một trợ lý AI thông minh, thân thiện hỗ trợ nhân viên nội bộ của GearVN.
-Nhiệm vụ của bạn là giải đáp các thắc mắc của nhân viên một cách tự nhiên, chu đáo và chính xác dựa trên thông tin quy định được cung cấp.
+SYSTEM_PROMPT = """Bạn là Trợ lý AI Chuyên viên Pháp chế & Đào tạo Quy trình Nội bộ của chuỗi công nghệ bán lẻ GearVN.
+Nhiệm vụ của bạn là giải đáp chi tiết, thấu đáo và chính xác mọi câu hỏi của nhân viên dựa trên các văn bản quy định nội bộ được cung cấp.
 
-Yêu cầu về cách trả lời:
-1. Trả lời tự nhiên, trôi chảy và thân thiện như một chatbot đàm thoại (xưng 'mình', gọi 'bạn').
-2. TUYỆT ĐỐI KHÔNG trích nguyên văn máy móc, KHÔNG dùng từ "Trả lời:", KHÔNG bắt đầu bằng "Theo văn bản..." hay "Căn cứ theo...".
-3. Diễn đạt lại nội dung thành lời tư vấn dễ hiểu, phân chia các bước thực hiện hoặc lưu ý an toàn bằng gạch đầu dòng rõ ràng.
-4. Đảm bảo thông tin hoàn toàn chính xác theo nội dung được cung cấp, không tự bịa đặt thêm."""
+YÊU CẦU TRẢ LỜI CỰC KỲ CHI TIẾT & CHUYÊN NGHIỆP:
+1. TRẢ LỜI ĐẦY ĐỦ VÀ TOÀN DIỆN: Tuyệt đối không trả lời cộc lốc hay lướt qua. Hãy trình bày tường tận từng khía cạnh của vấn đề.
+2. BỐ CỤC RÕ RÀNG VÀ CHẶT CHẼ THEO CÁC MỤC:
+   - 📌 **Tổng quan & Điều kiện áp dụng:** Nêu rõ phạm vi đối tượng, thời hạn (số ngày/tháng), điều kiện đạt chuẩn hoặc loại trừ.
+   - 📋 **Quy trình xử lý từng bước (Step-by-step):** Trình bày chi tiết Bước 1, Bước 2, Bước 3... nhân viên cần kiểm tra gì, thao tác trên hệ thống ERP ra sao.
+   - ⏱️ **Thời gian giải quyết & Định lượng cụ thể:** Nêu rõ số phút test tại quầy, thời gian gửi hãng, tỷ lệ chiết khấu (%), số tiền hỗ trợ tối đa, giới hạn nhiệt độ an toàn...
+   - ⚠️ **Lưu ý quan trọng & Cảnh báo rủi ro:** Nêu các trường hợp từ chối, những lỗi người dùng hay mắc phải hoặc nguyên tắc an toàn cần tuân thủ.
+3. PHONG CÁCH: Thân thiện, tôn trọng và chuyên nghiệp (xưng 'mình', gọi 'bạn').
+4. TRUNG THỰC VỚI DỮ LIỆU: Mọi số liệu, chính sách phải bám sát 100% tài liệu quy định được cung cấp."""
 
 class KnowledgeBaseService:
     def __init__(self):
@@ -30,10 +35,14 @@ class KnowledgeBaseService:
 
     def _init_embedding_model(self):
         try:
-            from sentence_transformers import SentenceTransformer
+            import importlib
+            st_module = importlib.import_module("sentence_transformers")
+            SentenceTransformer = getattr(st_module, "SentenceTransformer")
             self.embedding_model = SentenceTransformer('BAAI/bge-small-en-v1.5')
-        except Exception:
+        except (ImportError, Exception):
+            # Nếu chưa cài sentence-transformers, hệ thống tự động sử dụng TF-IDF & LM Studio cực nhanh
             self.embedding_model = None
+
 
     def _build_smart_chunks(self, docs: List[InternalDoc]) -> Tuple[List[str], List[Dict[str, Any]]]:
         """
@@ -142,8 +151,20 @@ class KnowledgeBaseService:
         top_k: int = 1,
         space_category: Optional[str] = None
     ) -> RAGQueryResponse:
-        space_name = space_category if (space_category and space_category != "all") else "Tất cả danh mục tài liệu"
-        citations = self.search_documents(db, query, top_k=1, space_category=space_category)
+        # TypeSafe AI Jev System-1 Query Routing
+        routed_category = space_category
+        if not routed_category or routed_category == "all":
+            jev_routing = jev_service.route_rag_query(query)
+            if jev_routing.target_space != "all":
+                routed_category = jev_routing.target_space
+
+        space_name = routed_category if (routed_category and routed_category != "all") else "Tất cả danh mục tài liệu"
+        citations = self.search_documents(db, query, top_k=1, space_category=routed_category)
+
+        # Fallback: nếu lọc theo chuyên mục do Jev định tuyến chưa thấy, tìm trên toàn bộ tài liệu
+        if not citations and routed_category and routed_category != "all":
+            citations = self.search_documents(db, query, top_k=1, space_category=None)
+            space_name = "Tất cả danh mục tài liệu"
         
         dense_active = (self.embedding_model is not None) or lm_client.is_available()
 
@@ -163,11 +184,14 @@ class KnowledgeBaseService:
         if lm_client.is_available():
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Thông tin quy định nội bộ:\n{snippet}\n\nNhân viên hỏi: {query}\n\nHãy trả lời tự nhiên như một chatbot hỗ trợ, hướng dẫn cụ thể và thân thiện (không dùng từ 'Trả lời:', không chép nguyên văn khô cứng):"}
+                {"role": "user", "content": (
+                    f"Thông tin văn bản quy định nội bộ GearVN:\n{snippet}\n\n"
+                    f"Nhân viên hỏi: \"{query}\"\n\n"
+                    f"Hãy hướng dẫn và giải đáp thật chi tiết, có phân chia đề mục rõ ràng, đầy đủ các bước thực hiện và lưu ý quan trọng:"
+                )}
             ]
-            llm_reply = lm_client.chat(messages=messages, temperature=0.5, max_tokens=600)
-            if llm_reply and llm_reply.strip() and not llm_reply.strip().endswith("?"):
-                # Loại bỏ các tiền tố không mong muốn nếu model sinh ra
+            llm_reply = lm_client.chat(messages=messages, temperature=0.3, max_tokens=900)
+            if llm_reply and len(llm_reply.strip()) > 30 and not llm_reply.strip().endswith("?"):
                 clean_reply = re.sub(r'^(Trả lời|Đáp|Hướng dẫn|Giải đáp):\s*', '', llm_reply.strip(), flags=re.IGNORECASE)
                 return RAGQueryResponse(
                     answer=clean_reply.strip(),
@@ -176,31 +200,31 @@ class KnowledgeBaseService:
                     dense_model_active=dense_active
                 )
 
-        # 2. Phân tích & Trả lời tự nhiên dạng Chatbot (Conversational Synthesis Fallback)
-        clean = snippet
-        # Bỏ tiêu đề câu hỏi / đề mục
-        clean = re.sub(r'^(Câu|Điều)\s*\d+[\.:\s]*[^\n]*\n*', '', clean, flags=re.IGNORECASE)
-        # Bỏ nhãn Trả lời: / tra loi:
-        clean = re.sub(r'^(Trả lời|Đáp):\s*', '', clean, flags=re.IGNORECASE)
-        clean = re.sub(r'\n+(Trả lời|Đáp):\s*', '\n', clean, flags=re.IGNORECASE)
-        clean = re.sub(r'Xem Điều\s*[\d\.]+\.?', '', clean, flags=re.IGNORECASE).strip()
+        # 2. Phân tích & Trả lời tổng hợp chuyên sâu dạng Chatbot (Advanced Synthesis Fallback)
+        clean = snippet.strip()
+        lines = [line.strip() for line in clean.split("\n") if line.strip()]
 
-        # Tách thành các câu hoặc bước
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', clean) if len(s.strip()) > 3]
-        if len(sentences) >= 2:
-            steps = "\n".join([f"• {s}" for s in sentences])
-            answer_text = (
-                f"Chào bạn, đối với trường hợp này bạn hướng dẫn và thực hiện theo các bước sau nhé:\n\n"
-                f"{steps}\n\n"
-                f"Nếu cần hỗ trợ thêm thông tin gì khác, bạn cứ nhắn mình nhé!"
-            )
-        else:
-            answer_text = (
-                f"Chào bạn, về vấn đề này hướng xử lý như sau nhé:\n\n"
-                f"{clean}\n\n"
-                f"Bạn hỗ trợ theo hướng dẫn trên nhé!"
-            )
-        
+        formatted_sections = []
+        for line in lines:
+            if re.match(r'^(1|2|3|4|5|I|II|III)\.\s+', line):
+                formatted_sections.append(f"\n### {line}")
+            elif line.startswith(("-", "+", "*", "•")):
+                formatted_sections.append(f"{line}")
+            else:
+                formatted_sections.append(f"• {line}")
+
+        body_content = "\n".join(formatted_sections).strip()
+
+        answer_text = (
+            f"Chào bạn! Về câu hỏi của bạn, căn cứ theo tài liệu quy trình **{top_citation.title}** "
+            f"(Danh mục: *{top_citation.category}*), quy định và hướng dẫn chi tiết như sau:\n\n"
+            f"{body_content}\n\n"
+            f"📌 **Lưu ý & Khuyến nghị thực hiện:**\n"
+            f"• Nhân viên luôn kiểm tra đối soát số Serial Number (S/N) và tình trạng vật lý của thiết bị trước khi xử lý.\n"
+            f"• Tuân thủ nghiêm ngặt các mốc thời gian thẩm định và tiêu chuẩn kỹ thuật đã ban hành.\n\n"
+            f"Nếu cần hỗ trợ thêm thông tin hoặc xử lý trường hợp đặc biệt, bạn liên hệ ngay Quản lý showroom nhé!"
+        )
+
         return RAGQueryResponse(
             answer=answer_text,
             citations=[top_citation],
