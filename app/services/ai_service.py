@@ -1,16 +1,4 @@
-"""
-AI Sales Assistant — Laptop-Exclusive Domain Guardrail & Focused LLM
-=====================================================================
-1. Guardrail Gatekeeper (Bộ lọc phạm vi chủ đề):
-   - Chỉ tiếp nhận và phản hồi các câu hỏi trong phạm vi LAPTOP / MÁY TÍNH XÁCH TAY.
-   - Nhận diện lời chào / mở đầu thân thiện để tiếp đón và giới thiệu vai trò tư vấn laptop.
-   - Tự động chặn và từ chối lịch sự, bẻ lái về laptop đối với các chủ đề ngoài lề (nấu ăn, toán học, thời sự, điện thoại, máy giặt...).
-2. Data Whitelisting (Khóa chặt tầng dữ liệu):
-   - 100% sản phẩm truy vấn từ Database là LAPTOP (Gaming, Ultrabook văn phòng, Đồ họa, MacBook).
-3. System Prompt Hard Boundary & Negative Constraints:
-   - Nghiêm cấm LLM trả lời các chủ đề ngoài laptop.
-   - Trả lời thẳng vào trọng tâm, ngắn gọn, phân tích phần cứng rõ ràng.
-"""
+
 import re
 import json
 from typing import List, Dict, Any, Optional

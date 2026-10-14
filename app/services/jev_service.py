@@ -189,7 +189,7 @@ class JevService:
         lower = text.lower().strip()
 
         # Kiểm duyệt từ ngữ thô tục / spam
-        toxic_words = ["lừa đảo", "chó", "mất dạy", "scam", "đm", "vl", "link sex", "casino"]
+        toxic_words = ["lừa đảo", "chó", "mất dạy", "scam", "đm", "vl", "casino"]
         is_toxic = any(t in lower for t in toxic_words)
 
         # Phát hiện khía cạnh (aspects)
