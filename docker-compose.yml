@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gearvn_pcstore_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Gắn kết Volume bền vững: Giữ nguyên Database, File CSV và Vector Index FAISS
+      - ./data:/app/data
+      # Gắn kết Static và Templates để có thể cập nhật giao diện nóng (tùy chọn)
+      - ./app/static:/app/app/static
+      - ./app/templates:/app/app/templates
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Cho phép kết nối tới LM Studio đang chạy trên máy Host ngoài container
+      - LM_STUDIO_URL=http://host.docker.internal:1234/v1
+    extra_hosts:
+      # Ánh xạ host.docker.internal về IP của máy chủ ngoài
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  default:
+    name: gearvn_network
