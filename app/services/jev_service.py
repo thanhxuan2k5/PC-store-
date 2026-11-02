@@ -1,12 +1,4 @@
-"""
-TypeSafe AI — Jev System-One Decision Service
-=============================================
-Tích hợp mô hình quyết định chuyên dụng Jev của TypeSafe AI vào GearVN Ecosystem:
-1. Chat Gatekeeper & Intent Router (System-1 Decision trước LLM System-2).
-2. Review Sentiment & Content Moderation (Phân loại cảm xúc + chống spam).
-3. RAG Query Space Router (Định tuyến câu hỏi vào đúng chuyên mục quy định).
-4. Hardware Specs Extractor (Chuẩn hóa thông số kỹ thuật có cấu trúc).
-"""
+
 
 import os
 import re

@@ -9,6 +9,7 @@ from app.models.product import Product
 from app.schemas.ai import AIChatRequest, AIChatResponse, RecommendedProductItem
 from app.core.lm_client import lm_client
 from app.services.jev_service import jev_service, JevChatDecision
+from app.config import settings
 
 
 # ==============================================================================
@@ -342,10 +343,10 @@ class AISalesAssistant:
             )
         })
 
-        # 4. Stream câu trả lời từ LLM (Temperature 0.25)
+        # 4. Stream câu trả lời từ LLM (Tối ưu GPU T1200: max_tokens nhẹ)
         has_streamed = False
         if lm_client.is_available():
-            for chunk in lm_client.stream_chat(messages=messages, temperature=0.25, max_tokens=750):
+            for chunk in lm_client.stream_chat(messages=messages, temperature=0.25, max_tokens=settings.AI_MAX_TOKENS):
                 has_streamed = True
                 yield {"type": "content", "chunk": chunk}
 

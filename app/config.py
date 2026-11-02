@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     LM_STUDIO_API_KEY: str = os.getenv("LM_STUDIO_API_KEY", "")
     LM_STUDIO_ENABLED: bool = os.getenv("LM_STUDIO_ENABLED", "true").lower() == "true"
     LM_STUDIO_TIMEOUT: int = int(os.getenv("LM_STUDIO_TIMEOUT", "30"))
+    
+    # Tối ưu hóa GPU T1200: Giới hạn token và kích thước Vector nhẹ
+    AI_MAX_TOKENS: int = int(os.getenv("AI_MAX_TOKENS", "400"))
+    FAISS_DIMENSION: int = int(os.getenv("FAISS_DIMENSION", "256"))
 
     # TypeSafe AI — Jev System-One Decision Engine
     TYPESAFE_AI_API_KEY: str = os.getenv("TYPESAFE_AI_API_KEY") or os.getenv("JEV_API_KEY", "")
@@ -39,6 +43,10 @@ class Settings(BaseSettings):
     JEV_MODEL: str = os.getenv("JEV_MODEL", "jev-decision-v1")
     JEV_ENABLED: bool = os.getenv("JEV_ENABLED", "true").lower() == "true"
     JEV_TIMEOUT: int = int(os.getenv("JEV_TIMEOUT", "10"))
+
+    # FAISS Vector Storage Settings
+    FAISS_INDEX_PATH: str = os.path.join(DATA_DIR, "faiss_gearvn.index")
+    FAISS_MAP_PATH: str = os.path.join(DATA_DIR, "faiss_docmap.json")
 
     class Config:
         env_file = ".env"

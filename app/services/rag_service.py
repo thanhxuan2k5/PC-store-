@@ -1,14 +1,24 @@
 import os
 import re
+import json
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 from sqlalchemy.orm import Session
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+# ------------------------------------------------------------------------------
+# LANGCHAIN & FAISS INTEGRATION
+# ------------------------------------------------------------------------------
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
+from langchain_community.vectorstores import FAISS
+
 from app.models.internal_doc import InternalDoc
 from app.schemas.rag import RAGCitation, RAGQueryResponse
 from app.core.lm_client import lm_client
 from app.services.jev_service import jev_service
+from app.config import settings
 
 SYSTEM_PROMPT = """Bạn là Trợ lý AI Chuyên viên Pháp chế & Đào tạo Quy trình Nội bộ của chuỗi công nghệ bán lẻ GearVN.
 Nhiệm vụ của bạn là giải đáp chi tiết, thấu đáo và chính xác mọi câu hỏi của nhân viên dựa trên các văn bản quy định nội bộ được cung cấp.
@@ -23,15 +33,40 @@ YÊU CẦU TRẢ LỜI CỰC KỲ CHI TIẾT & CHUYÊN NGHIỆP:
 3. PHONG CÁCH: Thân thiện, tôn trọng và chuyên nghiệp (xưng 'mình', gọi 'bạn').
 4. TRUNG THỰC VỚI DỮ LIỆU: Mọi số liệu, chính sách phải bám sát 100% tài liệu quy định được cung cấp."""
 
+class LocalDenseEmbeddings(Embeddings):
+    """
+    LangChain Custom Embeddings Adapter:
+    Tích hợp SentenceTransformer ('bge-small-en-v1.5') hoặc Hashing Projection
+    để tạo vector chuẩn hóa tương thích 100% với LangChain VectorStore.
+    """
+    def __init__(self, embedding_model=None, dimension=384):
+        self.embedding_model = embedding_model
+        self.dimension = dimension
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        if self.embedding_model:
+            emb = self.embedding_model.encode(texts, normalize_embeddings=True)
+            return emb.tolist()
+        else:
+            from sklearn.feature_extraction.text import HashingVectorizer
+            hv = HashingVectorizer(n_features=self.dimension, norm='l2')
+            emb = hv.transform(texts).toarray()
+            return emb.tolist()
+
+    def embed_query(self, text: str) -> List[float]:
+        return self.embed_documents([text])[0]
+
 class KnowledgeBaseService:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words=None)
         self.embedding_model = None
-        self._cached_doc_count = -1
-        self._cached_chunks = []
-        self._cached_doc_map = []
-        self._cached_tfidf_matrix = None
+        self.dimension = settings.FAISS_DIMENSION
+        
         self._init_embedding_model()
+        self.langchain_embeddings = LocalDenseEmbeddings(self.embedding_model, self.dimension)
+        self.langchain_faiss: Optional[FAISS] = None
 
     def _init_embedding_model(self):
         try:
@@ -39,19 +74,20 @@ class KnowledgeBaseService:
             st_module = importlib.import_module("sentence_transformers")
             SentenceTransformer = getattr(st_module, "SentenceTransformer")
             self.embedding_model = SentenceTransformer('BAAI/bge-small-en-v1.5')
+            self.dimension = 384
         except (ImportError, Exception):
-            # Nếu chưa cài sentence-transformers, hệ thống tự động sử dụng TF-IDF & LM Studio cực nhanh
             self.embedding_model = None
+            self.dimension = 384
 
-
-    def _build_smart_chunks(self, docs: List[InternalDoc]) -> Tuple[List[str], List[Dict[str, Any]]]:
+    def _build_smart_chunks(self, docs: List[InternalDoc]) -> Tuple[List[str], List[Dict[str, Any]], List[Document]]:
         """
         Chia nhỏ văn bản thông minh (Boundary-Aware Chunking):
         - Gom toàn bộ Câu hỏi (hoặc Tiêu đề) và Câu trả lời / Nội dung chi tiết đi kèm vào cùng 1 đoạn (Chunk).
-        - Ngăn chặn hoàn toàn việc câu hỏi bị tách rời khỏi câu trả lời.
+        - Đồng thời đóng gói thành danh sách LangChain Document objects kèm metadata chuẩn xác.
         """
         chunks = []
         doc_map = []
+        langchain_docs = []
 
         for doc in docs:
             raw_paras = [p.strip() for p in doc.content_text.split("\n\n") if len(p.strip()) > 5]
@@ -81,14 +117,38 @@ class KnowledgeBaseService:
 
                 combined = "\n\n".join(chunk_paras).strip()
                 chunks.append(f"{doc.title} - {combined}")
-                doc_map.append({
+                metadata = {
                     "doc_id": doc.id,
                     "title": doc.title,
                     "category": doc.category,
                     "snippet": combined
-                })
+                }
+                doc_map.append(metadata)
+                langchain_docs.append(Document(page_content=f"{doc.title} - {combined}", metadata=metadata))
 
-        return chunks, doc_map
+        return chunks, doc_map, langchain_docs
+
+    def _build_langchain_faiss(self, langchain_docs: List[Document]) -> Optional[FAISS]:
+        """
+        Khởi tạo và cập nhật LangChain FAISS VectorStore.
+        Lưu trữ (persist) chỉ mục ra đĩa theo cấu hình settings.
+        """
+        if not langchain_docs:
+            return None
+        try:
+            vectorstore = FAISS.from_documents(
+                documents=langchain_docs,
+                embedding=self.langchain_embeddings
+            )
+            # Lưu trữ (Persist) LangChain FAISS index
+            faiss_dir = os.path.join(settings.DATA_DIR, "langchain_faiss")
+            os.makedirs(faiss_dir, exist_ok=True)
+            vectorstore.save_local(faiss_dir)
+            self.langchain_faiss = vectorstore
+            return vectorstore
+        except Exception as e:
+            print(f"[LangChain FAISS Error]: {e}")
+            return None
 
     def search_documents(
         self,
@@ -97,6 +157,10 @@ class KnowledgeBaseService:
         top_k: int = 1,
         space_category: Optional[str] = None
     ) -> List[RAGCitation]:
+        """
+        Tìm kiếm tài liệu kết hợp LangChain FAISS VectorStore và TF-IDF Keyword Match.
+        Tuân thủ việc dùng db session đúng quy tắc.
+        """
         query_db = db.query(InternalDoc)
         if space_category and space_category.strip() and space_category != "all":
             query_db = query_db.filter(InternalDoc.category == space_category.strip())
@@ -105,11 +169,11 @@ class KnowledgeBaseService:
         if not docs:
             return []
 
-        chunks, doc_map = self._build_smart_chunks(docs)
+        chunks, doc_map, langchain_docs = self._build_smart_chunks(docs)
         if not chunks:
             return []
 
-        # 1. Tính toán ma trận TF-IDF
+        # 1. TÍNH TOÁN TF-IDF KEYWORD SIMILARITY
         try:
             tfidf_matrix = self.vectorizer.fit_transform(chunks)
             query_vec = self.vectorizer.transform([query])
@@ -118,23 +182,39 @@ class KnowledgeBaseService:
             print(f"[TF-IDF Error]: {e}")
             tfidf_sims = np.zeros(len(chunks))
 
-        final_sims = tfidf_sims.copy()
+        # 2. TÍNH TOÁN LANGCHAIN FAISS DENSE SIMILARITY
+        faiss_sims = np.zeros(len(chunks))
+        used_faiss = False
 
-        # 2. Kết hợp Dense Embeddings nếu có
-        if self.embedding_model:
-            try:
-                doc_embeddings = self.embedding_model.encode(chunks, normalize_embeddings=True)
-                query_embedding = self.embedding_model.encode([query], normalize_embeddings=True)
-                dense_sims = np.dot(query_embedding, doc_embeddings.T).flatten()
-                # Hybrid weighting: 60% TF-IDF keyword match + 40% Dense semantic match
-                final_sims = 0.6 * tfidf_sims + 0.4 * dense_sims
-            except Exception as e:
-                print(f"[Dense Model Error]: {e}")
+        try:
+            lc_faiss = self._build_langchain_faiss(langchain_docs)
+            if lc_faiss is not None:
+                # Tìm kiếm k đoạn tương đồng qua LangChain similarity_search_with_relevance_scores
+                # hoặc index direct search
+                raw_scores = lc_faiss.similarity_search_with_score(query, k=len(chunks))
+                for doc, dist in raw_scores:
+                    idx = doc.metadata.get("doc_id")
+                    # Tìm index tương ứng trong doc_map
+                    for i, d in enumerate(doc_map):
+                        if d["doc_id"] == idx and d["snippet"] == doc.metadata.get("snippet"):
+                            # Chuyển đổi distance sang similarity score (normalized)
+                            sim = max(0.0, 1.0 - (dist / 2.0)) if dist >= 0 else 0.85
+                            faiss_sims[i] = sim
+                            break
+                used_faiss = True
+        except Exception as e:
+            print(f"[LangChain Search Error]: {e}")
+
+        # 3. KẾT HỢP HYBRID RANKING (LANGCHAIN FAISS + TF-IDF)
+        if used_faiss and np.max(faiss_sims) > 0:
+            # 60% TF-IDF (từ khóa chính xác) + 40% LangChain FAISS (ngữ nghĩa)
+            final_sims = 0.6 * tfidf_sims + 0.4 * faiss_sims
+        else:
+            final_sims = tfidf_sims
 
         best_idx = int(final_sims.argmax())
         best_score = float(final_sims[best_idx])
 
-        # Đảm bảo có kết quả trả về
         item = doc_map[best_idx]
         return [RAGCitation(
             doc_id=item["doc_id"],
@@ -151,6 +231,10 @@ class KnowledgeBaseService:
         top_k: int = 1,
         space_category: Optional[str] = None
     ) -> RAGQueryResponse:
+        """
+        Giải đáp câu hỏi quy chế nội bộ có định tuyến qua TypeSafe AI Jev
+        và tìm kiếm qua LangChain FAISS VectorStore.
+        """
         # TypeSafe AI Jev System-1 Query Routing
         routed_category = space_category
         if not routed_category or routed_category == "all":
@@ -166,7 +250,7 @@ class KnowledgeBaseService:
             citations = self.search_documents(db, query, top_k=1, space_category=None)
             space_name = "Tất cả danh mục tài liệu"
         
-        dense_active = (self.embedding_model is not None) or lm_client.is_available()
+        dense_active = (self.langchain_faiss is not None) or lm_client.is_available()
 
         if not citations:
             return RAGQueryResponse(
@@ -178,7 +262,6 @@ class KnowledgeBaseService:
 
         top_citation = citations[0]
         snippet = top_citation.snippet.strip()
-        context_str = f"Tài liệu tham chiếu: {top_citation.title} (Danh mục: {top_citation.category})\nNội dung văn bản quy định:\n{snippet}"
 
         # 1. Trả lời bằng Generative LLM nếu LM Studio đang hoạt động
         if lm_client.is_available():
@@ -190,13 +273,13 @@ class KnowledgeBaseService:
                     f"Hãy hướng dẫn và giải đáp thật chi tiết, có phân chia đề mục rõ ràng, đầy đủ các bước thực hiện và lưu ý quan trọng:"
                 )}
             ]
-            llm_reply = lm_client.chat(messages=messages, temperature=0.3, max_tokens=900)
+            llm_reply = lm_client.chat(messages=messages, temperature=0.3, max_tokens=settings.AI_MAX_TOKENS)
             if llm_reply and len(llm_reply.strip()) > 30 and not llm_reply.strip().endswith("?"):
                 clean_reply = re.sub(r'^(Trả lời|Đáp|Hướng dẫn|Giải đáp):\s*', '', llm_reply.strip(), flags=re.IGNORECASE)
                 return RAGQueryResponse(
                     answer=clean_reply.strip(),
                     citations=[top_citation],
-                    vector_space_used=space_name,
+                    vector_space_used=f"{space_name} (LangChain FAISS)",
                     dense_model_active=dense_active
                 )
 
@@ -217,7 +300,7 @@ class KnowledgeBaseService:
 
         answer_text = (
             f"Chào bạn! Về câu hỏi của bạn, căn cứ theo tài liệu quy trình **{top_citation.title}** "
-            f"(Danh mục: *{top_citation.category}*), quy định và hướng dẫn chi tiết như sau:\n\n"
+            f"(Danh mục: *{top_citation.category}* - LangChain FAISS), quy định và hướng dẫn chi tiết như sau:\n\n"
             f"{body_content}\n\n"
             f"📌 **Lưu ý & Khuyến nghị thực hiện:**\n"
             f"• Nhân viên luôn kiểm tra đối soát số Serial Number (S/N) và tình trạng vật lý của thiết bị trước khi xử lý.\n"
@@ -228,7 +311,7 @@ class KnowledgeBaseService:
         return RAGQueryResponse(
             answer=answer_text,
             citations=[top_citation],
-            vector_space_used=space_name,
+            vector_space_used=f"{space_name} (LangChain FAISS Vector Space)",
             dense_model_active=dense_active
         )
 
