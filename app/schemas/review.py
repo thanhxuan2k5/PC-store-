@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class ReviewCreate(BaseModel):
@@ -19,5 +19,4 @@ class ReviewOut(BaseModel):
     sentiment_score: Optional[float] = 1.0
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

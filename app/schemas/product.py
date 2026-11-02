@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class ProductBase(BaseModel):
@@ -50,8 +50,7 @@ class ProductOut(ProductBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProductFilterParams(BaseModel):
     category_id: Optional[int] = None

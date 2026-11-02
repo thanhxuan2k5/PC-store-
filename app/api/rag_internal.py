@@ -295,7 +295,7 @@ def create_internal_doc(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff_or_admin)
 ):
-    doc = InternalDoc(**doc_in.dict())
+    doc = InternalDoc(**doc_in.model_dump())
     db.add(doc)
     db.commit()
     db.refresh(doc)
@@ -312,7 +312,7 @@ def update_internal_doc(
     if not doc:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
 
-    for field, val in doc_in.dict(exclude_unset=True).items():
+    for field, val in doc_in.model_dump(exclude_unset=True).items():
         if val is not None:
             setattr(doc, field, val)
 

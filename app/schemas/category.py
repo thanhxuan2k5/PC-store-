@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class CategoryBase(BaseModel):
     name: str
@@ -26,7 +26,6 @@ class CategoryOut(CategoryBase):
     id: int
     children: List["CategoryOut"] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-CategoryOut.update_forward_refs()
+CategoryOut.model_rebuild()

@@ -32,7 +32,7 @@ def create_category(
     if existing:
         raise HTTPException(status_code=400, detail="Slug danh mục đã tồn tại")
     
-    cat = Category(**cat_in.dict())
+    cat = Category(**cat_in.model_dump())
     db.add(cat)
     db.commit()
     db.refresh(cat)
@@ -49,7 +49,7 @@ def update_category(
     if not cat:
         raise HTTPException(status_code=404, detail="Không tìm thấy danh mục")
     
-    for field, value in cat_in.dict(exclude_unset=True).items():
+    for field, value in cat_in.model_dump(exclude_unset=True).items():
         setattr(cat, field, value)
     
     db.commit()

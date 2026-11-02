@@ -1,5 +1,5 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "GearVN Tech Store & AI Assistant"
@@ -20,8 +20,6 @@ class Settings(BaseSettings):
     
     # AI & Local LLM Settings
     USE_LOCAL_LLM: bool = True
-    LM_STUDIO_URL: str = "http://127.0.0.1:1234/v1"
-    LM_STUDIO_MODEL: str = "qwen2.5-7b-instruct"
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
@@ -48,9 +46,7 @@ class Settings(BaseSettings):
     FAISS_INDEX_PATH: str = os.path.join(DATA_DIR, "faiss_gearvn.index")
     FAISS_MAP_PATH: str = os.path.join(DATA_DIR, "faiss_docmap.json")
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 settings = Settings()
 

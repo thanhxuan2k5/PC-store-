@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from app.models.order import OrderStatus, PaymentMethod
 
@@ -26,8 +26,7 @@ class OrderItemOut(BaseModel):
     quantity: int
     subtotal: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OrderOut(BaseModel):
     id: int
@@ -46,8 +45,7 @@ class OrderOut(BaseModel):
     created_at: datetime
     items: List[OrderItemOut] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus

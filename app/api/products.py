@@ -115,7 +115,7 @@ def create_product(
     if existing:
         raise HTTPException(status_code=400, detail="Slug sản phẩm đã tồn tại")
 
-    product = Product(**prod_in.dict())
+    product = Product(**prod_in.model_dump())
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -132,7 +132,7 @@ def update_product(
     if not product:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
 
-    for field, val in prod_in.dict(exclude_unset=True).items():
+    for field, val in prod_in.model_dump(exclude_unset=True).items():
         setattr(product, field, val)
 
     db.commit()
