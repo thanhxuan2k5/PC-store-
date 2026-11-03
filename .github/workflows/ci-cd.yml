@@ -1,0 +1,100 @@
+name: GearVN PC Store CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # ==============================================================================
+  # 1. CI JOB: KIỂM THỬ TỰ ĐỘNG & KIỂM TRA CHUẨN MÃ NGUỒN
+  # ==============================================================================
+  test-and-lint:
+    name: Run Pytest & Syntax Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Verify Python Syntax Across Entire Codebase
+        run: |
+          python -m compileall app
+
+      - name: Execute Pytest Suite (14 Core Modules)
+        env:
+          PYTHONPATH: .
+          SECRET_KEY: test_secret_key_ci_cd_2026_xyz
+          ALGORITHM: HS256
+          DATABASE_URL: sqlite:///./data/gearvn.db
+        run: |
+          pytest tests/ -v
+
+  # ==============================================================================
+  # 2. DOCKER BUILD JOB: ĐÓNG GÓI IMAGE PRODUCTION
+  # ==============================================================================
+  build-docker:
+    name: Build & Verify Docker Image
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (Dry-run / Verification)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: gearvn-pcstore:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==============================================================================
+  # 3. CD JOB: TỰ ĐỘNG DEPLOY LÊN SERVER QUA SSH (Chỉ chạy khi push vào main)
+  # ==============================================================================
+  deploy:
+    name: Deploy to Production Server
+    needs: build-docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true # Bỏ qua nếu người dùng chưa thiết lập GitHub Secrets
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "===> Bắt đầu triển khai phiên bản mới trên Server..."
+            cd ~/pcstore || cd /opt/pcstore || exit 1
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            docker system prune -f
+            echo "===> Triển khai thành công!"
